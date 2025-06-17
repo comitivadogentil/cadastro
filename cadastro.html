@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro - Cavalgada</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f7f7f7;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input, select {
+      padding: 8px;
+      width: 300px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background: #eee;
+    }
+    #searchInput {
+      margin-bottom: 20px;
+      padding: 8px;
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Cadastro de Participantes - Cavalgada</h1>
+
+  <form id="cadastroForm">
+    <label>Nome: <input type="text" id="nome" required></label>
+    <label>Email: <input type="email" id="email"></label>
+    <label>Telefone: <input type="tel" id="telefone"></label>
+    <label>É Cavaleiro?
+      <select id="cavaleiro">
+        <option value="Sim">Sim</option>
+        <option value="Não">Não</option>
+      </select>
+    </label>
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <h2>Buscar Participante</h2>
+  <input type="text" id="searchInput" placeholder="Buscar por nome ou telefone...">
+
+  <h2>Lista de Participantes</h2>
+  <table id="tabelaParticipantes">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Telefone</th>
+        <th>Email</th>
+        <th>Cavaleiro</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button onclick="exportarParticipantes()">Exportar Dados</button>
+
+  <script>
+    const form = document.getElementById('cadastroForm');
+const tabela = document.querySelector('#tabelaParticipantes tbody');
+const searchInput = document.getElementById('searchInput');
+let participantes = JSON.parse(localStorage.getItem('participantes')) || [];
+
+function atualizarTabela(filtro = "") {
+  tabela.innerHTML = "";
+
+  const filtrados = participantes.filter(p => {
+    const nome = p.nome.toLowerCase();
+    const telefone = p.telefone.toLowerCase();
+    return nome.includes(filtro) || telefone.includes(filtro);
+  });
+
+  filtrados.forEach((p, index) => {
+    const linha = document.createElement('tr');
+    linha.innerHTML = `
+      <td>${p.nome}</td>
+      <td>${p.telefone}</td>
+      <td>${p.email}</td>
+      <td>${p.cavaleiro}</td>
+      <td><button onclick="excluirParticipante(${index})" style="background:red;color:white;border:none;padding:5px 10px;">Excluir</button></td>
+    `;
+    tabela.appendChild(linha);
+  });
+}
+
+function excluirParticipante(index) {
+  if (confirm("Tem certeza que deseja excluir este participante?")) {
+    participantes.splice(index, 1); // Remove do array
+    localStorage.setItem('participantes', JSON.stringify(participantes)); // Atualiza o localStorage
+    atualizarTabela(searchInput.value.toLowerCase()); // Atualiza a exibição
+  }
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const participante = {
+    nome: document.getElementById('nome').value,
+    email: document.getElementById('email').value,
+    telefone: document.getElementById('telefone').value,
+    cavaleiro: document.getElementById('cavaleiro').value
+  };
+
+  participantes.push(participante);
+  localStorage.setItem('participantes', JSON.stringify(participantes));
+  form.reset();
+  atualizarTabela(searchInput.value.toLowerCase());
+});
+
+searchInput.addEventListener('input', () => {
+  const filtro = searchInput.value.toLowerCase();
+  atualizarTabela(filtro);
+});
+
+function exportarParticipantes() {
+  const dados = JSON.stringify(participantes, null, 2);
+  const blob = new Blob([dados], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'participantes_cavalgada.json';
+  link.click();
+}
+
+atualizarTabela();
+
+  </script>
+</body>
+</html>
